@@ -83,6 +83,3 @@ If unsure, make your best guess.
     return res.status(500).json({ error: error.toString() });
   }
 }
-
-  }
-}
