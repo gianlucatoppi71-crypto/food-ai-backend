@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // --- CORS (required for GitHub Pages frontend) ---
+  // --- CORS ---
   res.setHeader("Access-Control-Allow-Origin", "https://gianlucatoppi71-crypto.github.io");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -15,24 +15,39 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing imageBase64" });
     }
 
-    // --- CALL GEMINI ---
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
-        process.env.GEMINI_API_KEY,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `
+    async function callGemini(promptText) {
+      const response = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
+          process.env.GEMINI_API_KEY,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: promptText },
+                  {
+                    inline_data: {
+                      mime_type: "image/jpeg",
+                      data: imageBase64.trim()
+                    }
+                  }
+                ]
+              }
+            ]
+          })
+        }
+      );
+
+      const data = await response.json();
+      return data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    }
+
+    // --- FIRST ATTEMPT ---
+    let aiText = await callGemini(`
 You are a strict nutrition analysis model.
-
-Your ONLY output must be valid JSON. No text. No markdown. No explanations.
-
-Analyze the food in the image and return:
+Return ONLY valid JSON:
 
 {
   "description": "string",
@@ -42,43 +57,39 @@ Analyze the food in the image and return:
   "fat": number
 }
 
-Rules:
-- ALWAYS return JSON.
-- NEVER return text outside JSON.
-- NEVER return empty values.
-- If unsure, guess the closest food.
-- If multiple foods appear, choose the main one.
-`
-                },
-                {
-                  inline_data: {
-                    mime_type: "image/jpeg",
-                    data: imageBase64
-                  }
-                }
-              ]
-            }
-          ]
-        })
-      }
-    );
-
-    const data = await response.json();
-
-    // --- EXTRACT JSON FROM GEMINI ---
-    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+No text. No markdown. No explanation.
+If unsure, guess the closest food.
+    `);
 
     let nutrition;
+
     try {
       nutrition = JSON.parse(aiText);
     } catch {
-      nutrition = {
-        description: "Unknown food",
-        calories: 0,
-        protein: 0,
-        carbs: 0,
-        fat: 0
-      };
+      // --- SECOND ATTEMPT (fallback) ---
+      aiText = await callGemini(`
+Return ONLY JSON with estimated nutrition:
+
+{
+  "description": "string",
+  "calories": number,
+  "protein": number,
+  "carbs": number,
+  "fat": number
+}
+      `);
+
+      try {
+        nutrition = JSON.parse(aiText);
+      } catch {
+        nutrition = {
+          description: "Unknown food",
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fat: 0
+        };
+      }
     }
 
     return res.status(200).json(nutrition);
