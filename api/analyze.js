@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // --- CORS (required for GitHub Pages) ---
+  // --- CORS (required for GitHub Pages frontend) ---
   res.setHeader("Access-Control-Allow-Origin", "https://gianlucatoppi71-crypto.github.io");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -28,22 +28,26 @@ export default async function handler(req, res) {
               parts: [
                 {
                   text: `
-You are a nutrition analysis model.
+You are a strict nutrition analysis model.
 
-Look at the food in the image and identify it.
+Your ONLY output must be valid JSON. No text. No markdown. No explanations.
 
-Return ONLY valid JSON in this exact format:
+Analyze the food in the image and return:
 
 {
-  "description": "name of the food",
+  "description": "string",
   "calories": number,
   "protein": number,
   "carbs": number,
   "fat": number
 }
 
-Do NOT include explanations, text, markdown, or comments.
-If unsure, make your best guess.
+Rules:
+- ALWAYS return JSON.
+- NEVER return text outside JSON.
+- NEVER return empty values.
+- If unsure, guess the closest food.
+- If multiple foods appear, choose the main one.
 `
                 },
                 {
