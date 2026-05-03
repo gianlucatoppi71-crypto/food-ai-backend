@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // --- CORS FIX ---
+  // --- CORS (required for GitHub Pages) ---
   res.setHeader("Access-Control-Allow-Origin", "https://gianlucatoppi71-crypto.github.io");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -9,7 +9,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // --- BODY PARSING FIX ---
     const { imageBase64 } = req.body || {};
 
     if (!imageBase64) {
@@ -28,8 +27,24 @@ export default async function handler(req, res) {
             {
               parts: [
                 {
-                  text:
-                    "Analyze this food. Return JSON ONLY with calories, protein, carbs, fat, description."
+                  text: `
+You are a nutrition analysis model.
+
+Look at the food in the image and identify it.
+
+Return ONLY valid JSON in this exact format:
+
+{
+  "description": "name of the food",
+  "calories": number,
+  "protein": number,
+  "carbs": number,
+  "fat": number
+}
+
+Do NOT include explanations, text, markdown, or comments.
+If unsure, make your best guess.
+`
                 },
                 {
                   inline_data: {
@@ -54,16 +69,20 @@ export default async function handler(req, res) {
       nutrition = JSON.parse(aiText);
     } catch {
       nutrition = {
+        description: "Unknown food",
         calories: 0,
         protein: 0,
         carbs: 0,
-        fat: 0,
-        description: "Could not parse AI response"
+        fat: 0
       };
     }
 
     return res.status(200).json(nutrition);
+
   } catch (error) {
     return res.status(500).json({ error: error.toString() });
+  }
+}
+
   }
 }
