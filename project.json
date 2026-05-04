@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/analyze.js": {
+      "maxRequestBodySize": "10mb"
+    }
+  }
+}
