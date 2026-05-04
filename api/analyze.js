@@ -15,6 +15,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing imageBase64" });
     }
 
+    // --- CLEAN + URL-SAFE BASE64 ---
+    const safeBase64 = imageBase64
+      .replace(/[^A-Za-z0-9+/=]/g, "")  // remove invalid chars
+      .replace(/\+/g, "-")              // URL-safe
+      .replace(/\//g, "_")              // URL-safe
+      .replace(/=+$/, "");              // remove padding
+
     async function callGemini(promptText) {
       const response = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
@@ -30,7 +37,7 @@ export default async function handler(req, res) {
                   {
                     inline_data: {
                       mime_type: "image/jpeg",
-                      data: imageBase64.trim()
+                      data: safeBase64
                     }
                   }
                 ]
