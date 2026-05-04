@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   try {
     // CORS + preflight
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -25,10 +25,8 @@ export default async function handler(req, res) {
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    // Correct model
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    // STRICT JSON-ONLY PROMPT
     const prompt = `
       Return ONLY a JSON object. No text. No explanation. No markdown.
 
@@ -60,15 +58,12 @@ export default async function handler(req, res) {
       }
     };
 
-    // Gemini Vision request
     const result = await model.generateContent([prompt, image]);
 
     let text = result.response.text().trim();
 
-    // Remove markdown fences if Gemini adds them
     text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
 
-    // Extract JSON by finding first { and last }
     const start = text.indexOf("{");
     const end = text.lastIndexOf("}");
 
@@ -99,4 +94,4 @@ export default async function handler(req, res) {
       confidence: 0
     });
   }
-}
+};
