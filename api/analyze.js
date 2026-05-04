@@ -17,7 +17,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "No image provided" });
     }
 
+    // Convert to URL-safe base64 (REQUIRED for Gemini Vision)
+    const safeBase64 = imageBase64
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+    // Correct model
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     // STRICT JSON-ONLY PROMPT
@@ -47,12 +55,14 @@ export default async function handler(req, res) {
 
     const image = {
       inlineData: {
-        data: imageBase64,
+        data: safeBase64,
         mimeType: "image/jpeg"
       }
     };
 
+    // Gemini Vision request
     const result = await model.generateContent([prompt, image]);
+
     let text = result.response.text().trim();
 
     // Remove markdown fences if Gemini adds them
