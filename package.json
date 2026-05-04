@@ -1,3 +1,11 @@
+module.exports.config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "10mb"
+    }
+  }
+};
+
 {
   "name": "food-ai-backend",
   "version": "1.0.0",
