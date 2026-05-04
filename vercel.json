@@ -1,9 +1,3 @@
 {
-  "functions": {
-    "api/analyze.js": {
-      "maxDuration": 30,
-      "memory": 1024,
-      "maxRequestBodySize": "10mb"
-    }
-  }
+  "version": 2
 }
