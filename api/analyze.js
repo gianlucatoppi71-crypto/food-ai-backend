@@ -20,9 +20,9 @@ export default async function handler(req, res) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    // FORCE GEMINI TO RETURN ONLY JSON
+    // STRICT JSON-ONLY PROMPT
     const prompt = `
-      You MUST return ONLY a JSON object. No text, no explanation.
+      Return ONLY a JSON object. No text. No explanation. No markdown.
 
       If the image does NOT contain food, return exactly:
       {
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
 
       If the image DOES contain food, return exactly:
       {
-        "name": "...",
+        "name": "string",
         "calories": number,
         "protein": number,
         "carbs": number,
@@ -53,13 +53,16 @@ export default async function handler(req, res) {
     };
 
     const result = await model.generateContent([prompt, image]);
-    const text = result.response.text();
+    let text = result.response.text().trim();
 
-    // Extract JSON
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    // Remove markdown fences if Gemini adds them
+    text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
 
-    if (!jsonMatch) {
-      // If Gemini didn't return JSON, treat as NOT FOOD
+    // Extract JSON by finding first { and last }
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+
+    if (start === -1 || end === -1) {
       return res.status(200).json({
         name: "not food",
         calories: 0,
@@ -70,14 +73,20 @@ export default async function handler(req, res) {
       });
     }
 
-    const data = JSON.parse(jsonMatch[0]);
+    const jsonText = text.slice(start, end + 1);
+    const data = JSON.parse(jsonText);
+
     return res.status(200).json(data);
 
   } catch (error) {
     console.error("Backend error:", error);
     return res.status(500).json({
-      error: "Server error",
-      details: error.message
+      name: "not food",
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      confidence: 0
     });
   }
 }
