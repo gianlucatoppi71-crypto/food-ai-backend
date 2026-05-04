@@ -1,7 +1,16 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
+    if (req.method === "OPTIONS") {
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+      return res.status(200).end();
+    }
+
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
     const { imageBase64 } = req.body;
 
     if (!imageBase64) {
@@ -18,8 +27,7 @@ module.exports = async function handler(req, res) {
       - protein
       - carbs
       - fat
-      - confidence (0–1)
-      No text outside JSON.
+      - confidence
     `;
 
     const image = {
@@ -44,4 +52,4 @@ module.exports = async function handler(req, res) {
     console.error("Backend error:", error);
     return res.status(500).json({ error: "Server error", details: error.message });
   }
-};
+}
