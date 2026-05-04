@@ -15,19 +15,18 @@ module.exports = async function handler(req, res) {
       You are a nutrition expert. Analyze the food in the image and return ONLY a JSON object with:
       - name
       - calories
-      - protein_g
-      - carbs_g
-      - fat_g
+      - protein
+      - carbs
+      - fat
       - confidence (0–1)
-
       No text outside JSON.
     `;
 
     const image = {
       inlineData: {
         data: imageBase64,
-        mimeType: "image/jpeg",
-      },
+        mimeType: "image/jpeg"
+      }
     };
 
     const result = await model.generateContent([prompt, image]);
