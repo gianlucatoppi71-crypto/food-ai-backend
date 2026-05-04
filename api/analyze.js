@@ -15,12 +15,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing imageBase64" });
     }
 
-    // --- CLEAN + URL-SAFE BASE64 ---
-    const safeBase64 = imageBase64
-      .replace(/[^A-Za-z0-9+/=]/g, "")  // remove invalid chars
-      .replace(/\+/g, "-")              // URL-safe
-      .replace(/\//g, "_")              // URL-safe
-      .replace(/=+$/, "");              // remove padding
+    // --- DO NOT MODIFY BASE64 ---
+    const rawBase64 = imageBase64; 
 
     async function callGemini(promptText) {
       const response = await fetch(
@@ -37,7 +33,7 @@ export default async function handler(req, res) {
                   {
                     inline_data: {
                       mime_type: "image/jpeg",
-                      data: safeBase64
+                      data: rawBase64
                     }
                   }
                 ]
@@ -73,7 +69,7 @@ If unsure, guess the closest food.
     try {
       nutrition = JSON.parse(aiText);
     } catch {
-      // --- SECOND ATTEMPT (fallback) ---
+      // --- SECOND ATTEMPT ---
       aiText = await callGemini(`
 Return ONLY JSON with estimated nutrition:
 
