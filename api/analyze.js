@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   try {
     const { imageBase64 } = req.body;
 
@@ -45,4 +45,4 @@ export default async function handler(req, res) {
     console.error("Backend error:", error);
     return res.status(500).json({ error: "Server error", details: error.message });
   }
-}
+};
